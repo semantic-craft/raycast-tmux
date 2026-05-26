@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "tmux",
-  "title": "Tmux",
+  "name": "tmux-kit",
+  "title": "Tmux Kit",
   "description": "Tmux cheatsheet and session manager: searchable key reference plus list / attach-via-switch / kill / rename sessions without leaving Raycast.",
   "icon": "tmux-icon.png",
   "author": "xianwei_zhang",
@@ -10,8 +10,8 @@
     {
       "name": "cheatsheet",
       "title": "Tmux Cheatsheet",
-      "subtitle": "Tmux",
-      "description": "Searchable tmux key bindings, commands and workflow reference (prefix = Ctrl+a).",
+      "subtitle": "Tmux Kit",
+      "description": "Searchable tmux key bindings and command reference. Supports any prefix key.",
       "mode": "view",
       "icon": "tmux-icon.png",
       "keywords": ["tmux", "cheat", "cheatsheet", "keys", "prefix", "reference"]
@@ -19,7 +19,7 @@
     {
       "name": "sessions",
       "title": "Tmux Sessions",
-      "subtitle": "Tmux",
+      "subtitle": "Tmux Kit",
       "description": "List tmux sessions; rename, kill, switch the focused client, or copy the attach command.",
       "mode": "view",
       "icon": "tmux-icon.png",
@@ -28,7 +28,7 @@
     {
       "name": "run-command",
       "title": "Run Tmux Command",
-      "subtitle": "Tmux",
+      "subtitle": "Tmux Kit",
       "description": "Send an arbitrary tmux command and view its output. Mirrors `prefix :` from inside Raycast.",
       "mode": "view",
       "icon": "tmux-icon.png",
@@ -37,7 +37,7 @@
     {
       "name": "resurrect-save",
       "title": "Tmux Resurrect Save",
-      "subtitle": "Tmux",
+      "subtitle": "Tmux Kit",
       "description": "Snapshot current tmux layout via tmux-resurrect.",
       "mode": "no-view",
       "icon": "tmux-icon.png",
@@ -46,7 +46,7 @@
     {
       "name": "resurrect-restore",
       "title": "Tmux Resurrect Restore",
-      "subtitle": "Tmux",
+      "subtitle": "Tmux Kit",
       "description": "Restore the last tmux-resurrect snapshot.",
       "mode": "no-view",
       "icon": "tmux-icon.png",
@@ -60,8 +60,16 @@
       "name": "tmuxBinary",
       "type": "textfield",
       "required": false,
-      "description": "Absolute path to the tmux binary. Default works for Homebrew on Apple Silicon.",
+      "description": "Absolute path to the tmux binary. Default works for Homebrew on Apple Silicon; Intel Macs typically use /usr/local/bin/tmux.",
       "default": "/opt/homebrew/bin/tmux"
+    },
+    {
+      "title": "Default start directory",
+      "name": "defaultStartDir",
+      "type": "textfield",
+      "required": false,
+      "description": "Default working directory pre-filled when creating a new session. Leave blank to use $HOME.",
+      "default": ""
     }
   ],
   "platforms": ["macOS"],

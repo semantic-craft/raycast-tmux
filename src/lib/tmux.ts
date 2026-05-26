@@ -23,11 +23,17 @@ export class TmuxError extends Error {
   }
 }
 
-async function run(args: string[]): Promise<{ stdout: string; stderr: string }> {
+async function run(
+  args: string[],
+): Promise<{ stdout: string; stderr: string }> {
   try {
     return await execFileP(tmuxBin(), args, { encoding: "utf8" });
   } catch (e) {
-    const err = e as NodeJS.ErrnoException & { stdout?: string; stderr?: string; code?: number };
+    const err = e as NodeJS.ErrnoException & {
+      stdout?: string;
+      stderr?: string;
+      code?: number;
+    };
     throw new TmuxError(err.message, err.code ?? null, err.stderr ?? "");
   }
 }
@@ -59,7 +65,15 @@ export async function listSessions(): Promise<TmuxSession[]> {
       .split("\n")
       .filter((l) => l.length > 0)
       .map((line) => {
-        const [name, windows, attached, created, activity, currentWindow, currentPath] = line.split("\t");
+        const [
+          name,
+          windows,
+          attached,
+          created,
+          activity,
+          currentWindow,
+          currentPath,
+        ] = line.split("\t");
         return {
           name,
           windows: Number(windows),
@@ -86,7 +100,10 @@ export async function killOtherSessions(keep: string): Promise<void> {
   await run(["kill-session", "-a", "-t", keep]);
 }
 
-export async function renameSession(oldName: string, newName: string): Promise<void> {
+export async function renameSession(
+  oldName: string,
+  newName: string,
+): Promise<void> {
   await run(["rename-session", "-t", oldName, newName]);
 }
 
@@ -94,7 +111,10 @@ export async function switchClient(target: string): Promise<void> {
   await run(["switch-client", "-t", target]);
 }
 
-export async function newSession(name: string, startDir?: string): Promise<void> {
+export async function newSession(
+  name: string,
+  startDir?: string,
+): Promise<void> {
   const args = ["new-session", "-d", "-s", name];
   if (startDir) args.push("-c", startDir);
   await run(args);
@@ -147,7 +167,14 @@ const PANE_FORMAT = [
 ].join("\t");
 
 export async function listPanes(session: string): Promise<TmuxPane[]> {
-  const { stdout } = await run(["list-panes", "-t", session, "-s", "-F", PANE_FORMAT]);
+  const { stdout } = await run([
+    "list-panes",
+    "-t",
+    session,
+    "-s",
+    "-F",
+    PANE_FORMAT,
+  ]);
   return stdout
     .split("\n")
     .filter((l) => l.length > 0)
@@ -192,12 +219,18 @@ export async function resurrectRestore(): Promise<void> {
  * Returns stdout/stderr; throws TmuxError on non-zero exit (also returns
  * captured stderr inside the error).
  */
-export async function runRawCommand(input: string): Promise<{ stdout: string; stderr: string }> {
+export async function runRawCommand(
+  input: string,
+): Promise<{ stdout: string; stderr: string }> {
   const cmd = `${shellQuote(tmuxBin())} ${input}`;
   try {
     return await execFileP("/bin/sh", ["-c", cmd], { encoding: "utf8" });
   } catch (e) {
-    const err = e as NodeJS.ErrnoException & { stdout?: string; stderr?: string; code?: number };
+    const err = e as NodeJS.ErrnoException & {
+      stdout?: string;
+      stderr?: string;
+      code?: number;
+    };
     throw new TmuxError(err.message, err.code ?? null, err.stderr ?? "");
   }
 }

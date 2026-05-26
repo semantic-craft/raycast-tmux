@@ -8,6 +8,7 @@ import {
   List,
   Toast,
   confirmAlert,
+  getPreferenceValues,
   showToast,
   useNavigation,
 } from "@raycast/api";
@@ -27,6 +28,13 @@ import {
 } from "./lib/tmux";
 import { PanesView } from "./panes";
 
+function defaultStartDir(): string {
+  const p = getPreferenceValues<{
+    defaultStartDir?: string;
+  }>().defaultStartDir?.trim();
+  return p && p.length > 0 ? p : homedir();
+}
+
 export default function SessionsCommand() {
   const [sessions, setSessions] = useState<TmuxSession[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +47,12 @@ export default function SessionsCommand() {
       setSessions(data);
       setError(null);
     } catch (e) {
-      const msg = e instanceof TmuxError ? e.stderr || e.message : e instanceof Error ? e.message : String(e);
+      const msg =
+        e instanceof TmuxError
+          ? e.stderr || e.message
+          : e instanceof Error
+            ? e.message
+            : String(e);
       setError(msg);
       setSessions([]);
     } finally {
@@ -54,10 +67,18 @@ export default function SessionsCommand() {
   return (
     <List isLoading={loading} searchBarPlaceholder="Search tmux sessions…">
       {error && (
-        <List.EmptyView icon={Icon.ExclamationMark} title="Failed to read tmux sessions" description={error} />
+        <List.EmptyView
+          icon={Icon.ExclamationMark}
+          title="Failed to read tmux sessions"
+          description={error}
+        />
       )}
-      {!error && sessions && sessions.length === 0 && <EmptyState onChange={refresh} />}
-      {sessions?.map((s) => <SessionItem key={s.name} session={s} onChange={refresh} />)}
+      {!error && sessions && sessions.length === 0 && (
+        <EmptyState onChange={refresh} />
+      )}
+      {sessions?.map((s) => (
+        <SessionItem key={s.name} session={s} onChange={refresh} />
+      ))}
     </List>
   );
 }
@@ -70,22 +91,10 @@ function EmptyState({ onChange }: { onChange: () => Promise<void> }) {
       description="tmux server 没在跑。"
       actions={
         <ActionPanel>
-          <Action
-            title="Start 'papers' Session"
+          <Action.Push
+            title="Create New Session"
             icon={Icon.Plus}
-            onAction={async () => {
-              try {
-                await newSession("papers", `${homedir()}/Library/CloudStorage/Dropbox`);
-                await showToast({ style: Toast.Style.Success, title: "Started 'papers'" });
-                await onChange();
-              } catch (e) {
-                await showToast({
-                  style: Toast.Style.Failure,
-                  title: "Create failed",
-                  message: String(e),
-                });
-              }
-            }}
+            target={<NewSessionForm onDone={onChange} />}
           />
         </ActionPanel>
       }
@@ -93,7 +102,13 @@ function EmptyState({ onChange }: { onChange: () => Promise<void> }) {
   );
 }
 
-function SessionItem({ session, onChange }: { session: TmuxSession; onChange: () => Promise<void> }) {
+function SessionItem({
+  session,
+  onChange,
+}: {
+  session: TmuxSession;
+  onChange: () => Promise<void>;
+}) {
   return (
     <List.Item
       title={session.name}
@@ -108,14 +123,23 @@ function SessionItem({ session, onChange }: { session: TmuxSession; onChange: ()
           tooltip: session.attached ? "Attached" : "Detached",
         },
         { text: `${session.windows}w` },
-        { date: session.activity, tooltip: `Last activity ${session.activity.toLocaleString()}` },
+        {
+          date: session.activity,
+          tooltip: `Last activity ${session.activity.toLocaleString()}`,
+        },
       ]}
       actions={<SessionActions session={session} onChange={onChange} />}
     />
   );
 }
 
-function SessionActions({ session, onChange }: { session: TmuxSession; onChange: () => Promise<void> }) {
+function SessionActions({
+  session,
+  onChange,
+}: {
+  session: TmuxSession;
+  onChange: () => Promise<void>;
+}) {
   const handleSwitch = useCallback(async () => {
     try {
       if (!(await hasAnyClient())) {
@@ -127,7 +151,10 @@ function SessionActions({ session, onChange }: { session: TmuxSession; onChange:
         return;
       }
       await switchClient(session.name);
-      await showToast({ style: Toast.Style.Success, title: `Switched to ${session.name}` });
+      await showToast({
+        style: Toast.Style.Success,
+        title: `Switched to ${session.name}`,
+      });
     } catch (e) {
       await showToast({
         style: Toast.Style.Failure,
@@ -146,7 +173,10 @@ function SessionActions({ session, onChange }: { session: TmuxSession; onChange:
     if (!ok) return;
     try {
       await killSession(session.name);
-      await showToast({ style: Toast.Style.Success, title: `Killed ${session.name}` });
+      await showToast({
+        style: Toast.Style.Success,
+        title: `Killed ${session.name}`,
+      });
       await onChange();
     } catch (e) {
       await showToast({
@@ -160,12 +190,18 @@ function SessionActions({ session, onChange }: { session: TmuxSession; onChange:
   const handleKillOthers = useCallback(async () => {
     const ok = await confirmAlert({
       title: `Kill all sessions except "${session.name}"?`,
-      primaryAction: { title: "Kill others", style: Alert.ActionStyle.Destructive },
+      primaryAction: {
+        title: "Kill Others",
+        style: Alert.ActionStyle.Destructive,
+      },
     });
     if (!ok) return;
     try {
       await killOtherSessions(session.name);
-      await showToast({ style: Toast.Style.Success, title: "Other sessions killed" });
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Other sessions killed",
+      });
       await onChange();
     } catch (e) {
       await showToast({
@@ -178,7 +214,11 @@ function SessionActions({ session, onChange }: { session: TmuxSession; onChange:
 
   return (
     <ActionPanel>
-      <Action title="Switch Client to Session" icon={Icon.ArrowRight} onAction={handleSwitch} />
+      <Action
+        title="Switch Client to Session"
+        icon={Icon.ArrowRight}
+        onAction={handleSwitch}
+      />
       <Action.CopyToClipboard
         title="Copy Attach Command"
         content={attachCommand(session.name)}
@@ -229,7 +269,13 @@ function SessionActions({ session, onChange }: { session: TmuxSession; onChange:
   );
 }
 
-function RenameForm({ session, onDone }: { session: TmuxSession; onDone: () => Promise<void> }) {
+function RenameForm({
+  session,
+  onDone,
+}: {
+  session: TmuxSession;
+  onDone: () => Promise<void>;
+}) {
   const { pop } = useNavigation();
   const [name, setName] = useState(session.name);
   const [error, setError] = useState<string | undefined>();
@@ -246,7 +292,10 @@ function RenameForm({ session, onDone }: { session: TmuxSession; onDone: () => P
     }
     try {
       await renameSession(session.name, trimmed);
-      await showToast({ style: Toast.Style.Success, title: `Renamed → ${trimmed}` });
+      await showToast({
+        style: Toast.Style.Success,
+        title: `Renamed → ${trimmed}`,
+      });
       await onDone();
       pop();
     } catch (e) {
@@ -262,7 +311,11 @@ function RenameForm({ session, onDone }: { session: TmuxSession; onDone: () => P
     <Form
       actions={
         <ActionPanel>
-          <Action.SubmitForm title="Rename" icon={Icon.Pencil} onSubmit={submit} />
+          <Action.SubmitForm
+            title="Rename"
+            icon={Icon.Pencil}
+            onSubmit={submit}
+          />
         </ActionPanel>
       }
     >
@@ -285,7 +338,7 @@ function RenameForm({ session, onDone }: { session: TmuxSession; onDone: () => P
 function NewSessionForm({ onDone }: { onDone: () => Promise<void> }) {
   const { pop } = useNavigation();
   const [name, setName] = useState("");
-  const [cwd, setCwd] = useState(`${homedir()}/Library/CloudStorage/Dropbox`);
+  const [cwd, setCwd] = useState(defaultStartDir());
   const [nameError, setNameError] = useState<string | undefined>();
 
   const submit = async () => {
@@ -300,7 +353,10 @@ function NewSessionForm({ onDone }: { onDone: () => Promise<void> }) {
     }
     try {
       await newSession(trimmed, cwd.trim() || undefined);
-      await showToast({ style: Toast.Style.Success, title: `Created ${trimmed}` });
+      await showToast({
+        style: Toast.Style.Success,
+        title: `Created ${trimmed}`,
+      });
       await onDone();
       pop();
     } catch (e) {
@@ -316,7 +372,11 @@ function NewSessionForm({ onDone }: { onDone: () => Promise<void> }) {
     <Form
       actions={
         <ActionPanel>
-          <Action.SubmitForm title="Create" icon={Icon.Plus} onSubmit={submit} />
+          <Action.SubmitForm
+            title="Create"
+            icon={Icon.Plus}
+            onSubmit={submit}
+          />
         </ActionPanel>
       }
     >
@@ -331,7 +391,12 @@ function NewSessionForm({ onDone }: { onDone: () => Promise<void> }) {
         error={nameError}
         autoFocus
       />
-      <Form.TextField id="cwd" title="Start directory" value={cwd} onChange={setCwd} />
+      <Form.TextField
+        id="cwd"
+        title="Start directory"
+        value={cwd}
+        onChange={setCwd}
+      />
       <Form.Description text="新 session 以 detached 状态创建（-d）。完成后可用 Switch / Copy Attach 进入。" />
     </Form>
   );

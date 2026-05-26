@@ -54,10 +54,18 @@ export function PanesView({ session }: { session: string }) {
       searchBarPlaceholder="Search by command, path, PID…"
     >
       {error && (
-        <List.EmptyView icon={Icon.ExclamationMark} title="Failed to list panes" description={error} />
+        <List.EmptyView
+          icon={Icon.ExclamationMark}
+          title="Failed to list panes"
+          description={error}
+        />
       )}
       {!error && !loading && panes.length === 0 && (
-        <List.EmptyView icon={Icon.AppWindow} title="No panes" description={`session ${session} 没有 pane`} />
+        <List.EmptyView
+          icon={Icon.AppWindow}
+          title="No panes"
+          description={`session ${session} 没有 pane`}
+        />
       )}
       {sortedGroups.map(([wi, group]) => (
         <List.Section
@@ -76,7 +84,13 @@ export function PanesView({ session }: { session: string }) {
   );
 }
 
-function PaneItem({ pane, onChange }: { pane: TmuxPane; onChange: () => Promise<void> }) {
+function PaneItem({
+  pane,
+  onChange,
+}: {
+  pane: TmuxPane;
+  onChange: () => Promise<void>;
+}) {
   return (
     <List.Item
       title={pane.command || "(no command)"}
@@ -88,7 +102,12 @@ function PaneItem({ pane, onChange }: { pane: TmuxPane; onChange: () => Promise<
       }
       keywords={[pane.command, pane.path, String(pane.pid), pane.id]}
       accessories={[
-        { tag: { value: `${pane.width}×${pane.height}`, color: Color.SecondaryText } },
+        {
+          tag: {
+            value: `${pane.width}×${pane.height}`,
+            color: Color.SecondaryText,
+          },
+        },
         { text: `PID ${pane.pid}` },
         { text: pane.id },
       ]}
@@ -115,18 +134,25 @@ function PaneItem({ pane, onChange }: { pane: TmuxPane; onChange: () => Promise<
               const ok = await confirmAlert({
                 title: `Kill pane ${pane.id}?`,
                 message: `Running: ${pane.command || "(none)"}  ·  PID ${pane.pid}`,
-                primaryAction: { title: "Kill", style: Alert.ActionStyle.Destructive },
+                primaryAction: {
+                  title: "Kill",
+                  style: Alert.ActionStyle.Destructive,
+                },
               });
               if (!ok) return;
               try {
                 await killPane(pane.id);
-                await showToast({ style: Toast.Style.Success, title: `Killed ${pane.id}` });
+                await showToast({
+                  style: Toast.Style.Success,
+                  title: `Killed ${pane.id}`,
+                });
                 await onChange();
               } catch (e) {
                 await showToast({
                   style: Toast.Style.Failure,
                   title: "Kill failed",
-                  message: e instanceof TmuxError ? e.stderr || e.message : String(e),
+                  message:
+                    e instanceof TmuxError ? e.stderr || e.message : String(e),
                 });
               }
             }}

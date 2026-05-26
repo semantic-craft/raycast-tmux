@@ -1,12 +1,12 @@
 export type CheatSection =
   | "Core / 核心"
   | "Window / 窗口"
+  | "Pane / 面板"
   | "Session"
   | "Copy mode / 复制"
   | "Misc / 杂项"
   | "Command mode / 命令模式"
   | "Resurrect / 持久化"
-  | "Workflow / 工作流"
   | "Files / 文件位置";
 
 export type CheatEntry = {
@@ -17,7 +17,7 @@ export type CheatEntry = {
   shortcut?: string;
   /** Tmux command (after `prefix :`), e.g. "kill-session -a" — shown in subtitle, copyable */
   command?: string;
-  /** Shell command, e.g. "ta papers" — copyable */
+  /** Shell command, e.g. "tmux attach -t name" — copyable */
   shell?: string;
   /** Short one-line description (shown as accessory + in detail). Optional: self-explanatory entries can omit. */
   description?: string;
@@ -29,6 +29,9 @@ export type CheatEntry = {
 
 const E = (entry: CheatEntry): CheatEntry => entry;
 
+// Note: "prefix" refers to whatever prefix key is configured in tmux.conf
+// (default `Ctrl+b`; common remap `Ctrl+a`). Shortcuts below use stock tmux defaults.
+
 export const CHEAT_ENTRIES: CheatEntry[] = [
   // ── Core ─────────────────────────────────────────────────────────────────
   E({
@@ -36,48 +39,48 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     section: "Core / 核心",
     title: "Detach 临时退出",
     shortcut: "prefix d",
-    description: "脱离当前 client，session 在后台继续跑。重新打开 cmux pane 自动接回。",
+    description: "脱离当前 client，session 在后台继续跑。",
     keywords: ["detach", "退出", "后台", "background"],
   }),
   E({
-    id: "core-reattach",
+    id: "core-attach",
     section: "Core / 核心",
-    title: "Re-attach to papers",
-    shell: "ta papers",
-    description: "重新接回默认的 papers session。`ta` 是 zshrc 里的函数。",
-    keywords: ["attach", "接回", "papers"],
+    title: "Attach to a session",
+    shell: "tmux attach -t <name>",
+    description: "接回指定 session（最近一个用 `tmux a`）。",
+    keywords: ["attach", "接回"],
   }),
   E({
     id: "core-list-sessions",
     section: "Core / 核心",
     title: "List sessions",
-    shell: "tls",
-    description: "列出所有 tmux session（zshrc 函数，等价 `tmux list-sessions`）。",
+    shell: "tmux ls",
+    description: "列出所有 tmux session。等价 `tmux list-sessions`。",
     keywords: ["list", "ls"],
+  }),
+  E({
+    id: "core-new-session",
+    section: "Core / 核心",
+    title: "New named session",
+    shell: "tmux new -s <name>",
+    description: "新建并 attach 到一个具名 session。加 `-d` 创建但不 attach。",
+    keywords: ["new", "create"],
   }),
   E({
     id: "core-kill-session",
     section: "Core / 核心",
     title: "Kill session by name",
-    shell: "tk <name>",
-    description: "杀掉指定 session（zshrc 函数）。",
+    shell: "tmux kill-session -t <name>",
+    description: "杀掉指定 session。",
     keywords: ["kill"],
   }),
   E({
-    id: "core-new-session",
+    id: "core-kill-server",
     section: "Core / 核心",
-    title: "New session",
-    shell: "tn <name>",
-    description: "新建并 attach 一个 session（zshrc 函数）。",
-    keywords: ["new", "create"],
-  }),
-  E({
-    id: "core-attach-named",
-    section: "Core / 核心",
-    title: "Attach session by name",
-    shell: "ta <name>",
-    description: "Attach 到指定 session（zshrc 函数）。",
-    keywords: ["attach"],
+    title: "Kill tmux server",
+    shell: "tmux kill-server",
+    description: "杀掉 tmux server 本身（所有 session 一并退出）。",
+    keywords: ["kill", "server", "exit"],
   }),
 
   // ── Window ───────────────────────────────────────────────────────────────
@@ -86,7 +89,7 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     section: "Window / 窗口",
     title: "New window",
     shortcut: "prefix c",
-    description: "新建 tmux window（即 tab），继承当前 pane 的 cwd。",
+    description: "新建 tmux window（tab），继承当前 pane 的 cwd。",
     keywords: ["new", "tab"],
   }),
   E({
@@ -102,6 +105,14 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     title: "Previous window",
     shortcut: "prefix p",
     description: "切到上一个 window。",
+  }),
+  E({
+    id: "win-last",
+    section: "Window / 窗口",
+    title: "Last window",
+    shortcut: "prefix l",
+    description: "切到上一次访问的 window（toggle）。",
+    keywords: ["last", "toggle"],
   }),
   E({
     id: "win-jump",
@@ -133,6 +144,102 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     shortcut: "prefix &",
     description: "杀掉当前 window（会问确认）。",
     keywords: ["kill", "close"],
+  }),
+  E({
+    id: "win-move",
+    section: "Window / 窗口",
+    title: "Move window to index N",
+    command: "move-window -t N",
+    description: "把当前 window 挪到 N 号位。",
+  }),
+
+  // ── Pane ─────────────────────────────────────────────────────────────────
+  E({
+    id: "pane-split-h",
+    section: "Pane / 面板",
+    title: "Split horizontally",
+    shortcut: 'prefix "',
+    description: "上下切分当前 pane。",
+    keywords: ["split", "horizontal"],
+  }),
+  E({
+    id: "pane-split-v",
+    section: "Pane / 面板",
+    title: "Split vertically",
+    shortcut: "prefix %",
+    description: "左右切分当前 pane。",
+    keywords: ["split", "vertical"],
+  }),
+  E({
+    id: "pane-cycle",
+    section: "Pane / 面板",
+    title: "Next pane",
+    shortcut: "prefix o",
+    description: "切到下一个 pane（顺时针）。",
+  }),
+  E({
+    id: "pane-move",
+    section: "Pane / 面板",
+    title: "Move between panes",
+    shortcut: "prefix ↑/↓/←/→",
+    description: "按方向选 pane。",
+    keywords: ["arrow", "navigate"],
+  }),
+  E({
+    id: "pane-zoom",
+    section: "Pane / 面板",
+    title: "Toggle pane zoom",
+    shortcut: "prefix z",
+    description: "把当前 pane 临时全屏（再按一次复原）。",
+    keywords: ["zoom", "fullscreen", "maximize"],
+  }),
+  E({
+    id: "pane-numbers",
+    section: "Pane / 面板",
+    title: "Show pane numbers",
+    shortcut: "prefix q",
+    description: "屏幕闪现 pane 编号，再按数字跳过去。",
+  }),
+  E({
+    id: "pane-kill",
+    section: "Pane / 面板",
+    title: "Kill pane",
+    shortcut: "prefix x",
+    description: "杀掉当前 pane（会问确认）。",
+    keywords: ["kill", "close"],
+  }),
+  E({
+    id: "pane-swap",
+    section: "Pane / 面板",
+    title: "Swap pane with next / previous",
+    shortcut: "prefix { / }",
+    description: "把当前 pane 和前/后一个对调。",
+    keywords: ["swap"],
+  }),
+  E({
+    id: "pane-resize",
+    section: "Pane / 面板",
+    title: "Resize pane",
+    shortcut: "prefix Ctrl+↑/↓/←/→",
+    description: "按住 prefix 后用 Ctrl+方向键调整 pane 大小。",
+    keywords: ["resize"],
+  }),
+  E({
+    id: "pane-break",
+    section: "Pane / 面板",
+    title: "Break pane to new window",
+    shortcut: "prefix !",
+    description: "把当前 pane 提升为独立 window。",
+    keywords: ["break", "promote"],
+  }),
+  E({
+    id: "pane-layout",
+    section: "Pane / 面板",
+    title: "Cycle layouts",
+    shortcut: "prefix Space",
+    description:
+      "在预设布局间循环（even-h / even-v / main-h / main-v / tiled）。",
+    keywords: ["layout"],
   }),
 
   // ── Session ──────────────────────────────────────────────────────────────
@@ -168,22 +275,23 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     section: "Copy mode / 复制",
     title: "Enter copy mode",
     shortcut: "prefix [",
-    description: "进入 vi 风格的复制/滚屏模式。",
+    description: "进入复制/滚屏模式。",
     keywords: ["scroll", "copy", "滚屏"],
   }),
   E({
-    id: "copy-begin",
+    id: "copy-begin-vi",
     section: "Copy mode / 复制",
-    title: "Begin selection",
+    title: "Begin selection (vi mode)",
     shortcut: "v",
-    description: "进入 copy mode 后按 v 开始视觉选择。",
+    description: "vi 模式下按 v 开始视觉选择。emacs 模式用 Space。",
   }),
   E({
-    id: "copy-yank",
+    id: "copy-yank-vi",
     section: "Copy mode / 复制",
-    title: "Yank → 系统剪贴板",
+    title: "Yank selection (vi mode)",
     shortcut: "y",
-    description: "选完按 y 复制并自动 pbcopy（已在 tmux.conf 配 copy-command）。",
+    description:
+      "vi 模式下按 y 复制。配合 `set -s copy-command 'pbcopy'` 同步到系统剪贴板。",
     keywords: ["yank", "pbcopy", "clipboard"],
   }),
   E({
@@ -211,14 +319,14 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     section: "Misc / 杂项",
     title: "Show all key bindings",
     shortcut: "prefix ?",
-    description: "弹出当前所有绑定。等价命令模式 `list-keys`。",
+    description: "弹出当前所有绑定。等价命令 `list-keys`。",
   }),
   E({
     id: "misc-cmd",
     section: "Misc / 杂项",
     title: "Enter command mode",
     shortcut: "prefix :",
-    description: "进入 tmux 命令行。Tab 补全、↑↓ 翻历史、`;` 链式。",
+    description: "进入 tmux 命令行。支持 Tab 补全、↑↓ 翻历史、`;` 链式。",
   }),
   E({
     id: "misc-reload",
@@ -241,7 +349,7 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     section: "Command mode / 命令模式",
     title: "Clear scrollback",
     command: "clear-history",
-    description: "清当前 pane 的 scrollback（你设了 1000 万行，定期清）。",
+    description: "清当前 pane 的 scrollback。",
     keywords: ["clear", "scrollback", "清"],
   }),
   E({
@@ -256,7 +364,7 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     section: "Command mode / 命令模式",
     title: "Kill all other sessions",
     command: "kill-session -a",
-    description: "杀除当前 session 之外所有 session（大扫除）。",
+    description: "杀除当前 session 之外所有 session。",
     keywords: ["clean", "扫除"],
   }),
   E({
@@ -289,8 +397,8 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     id: "cmd-toggle-mouse",
     section: "Command mode / 命令模式",
     title: "Toggle mouse mode",
-    command: "set -g mouse off",
-    description: "临时关鼠标（想用终端原生选择文本时）；on 打开。",
+    command: "set -g mouse on",
+    description: "打开鼠标支持（滚轮、点击聚焦、拖拽 resize）；off 关闭。",
   }),
   E({
     id: "cmd-toggle-status",
@@ -325,7 +433,7 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
     section: "Command mode / 命令模式",
     title: "List key bindings",
     command: "list-keys",
-    description: "查所有绑定（等价 prefix ?）。配合 `\\| grep` 过滤。",
+    description: "查所有绑定（等价 prefix ?）。",
   }),
   E({
     id: "cmd-move-window-cross",
@@ -337,87 +445,70 @@ export const CHEAT_ENTRIES: CheatEntry[] = [
 
   // ── Resurrect ────────────────────────────────────────────────────────────
   E({
-    id: "resurrect-save",
+    id: "resurrect-about",
     section: "Resurrect / 持久化",
-    title: "Resurrect: save layout",
-    command: "run-shell ~/.tmux/plugins/tmux-resurrect/scripts/save.sh",
-    description: "立刻存当前 session/window/pane 布局。",
+    title: "About tmux-resurrect",
+    shell: "https://github.com/tmux-plugins/tmux-resurrect",
+    description:
+      "tmux-resurrect 插件：把 session/window/pane 布局存到磁盘，重启 tmux 后恢复。本扩展自带保存/恢复命令。",
+    keywords: ["plugin"],
+  }),
+  E({
+    id: "resurrect-save-key",
+    section: "Resurrect / 持久化",
+    title: "Save layout (plugin default)",
+    shortcut: "prefix Ctrl+s",
+    description: "插件默认绑定的保存键。",
     keywords: ["save", "backup"],
   }),
   E({
-    id: "resurrect-restore",
+    id: "resurrect-restore-key",
     section: "Resurrect / 持久化",
-    title: "Resurrect: restore layout",
-    command: "run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh",
-    description: "恢复上次保存（也可 `prefix Ctrl+r`）。",
+    title: "Restore layout (plugin default)",
+    shortcut: "prefix Ctrl+r",
+    description: "插件默认绑定的恢复键。",
     keywords: ["restore"],
   }),
-
-  // ── Workflow ─────────────────────────────────────────────────────────────
   E({
-    id: "flow-cmux-attach",
-    section: "Workflow / 工作流",
-    title: "cmux pane → auto-attach papers",
-    description: "新开 cmux pane (`Cmd+N`) 会自动 exec ~/bin/tmux-start.sh → 接到 papers session。",
-    details:
-      "检测机制：cmux 启动的 shell 继承 macOS 的 `__CFBundleIdentifier=com.cmuxterm.app`，~/.zshrc 顶部块匹配后 exec tmux-start.sh。",
+    id: "resurrect-save-cmd",
+    section: "Resurrect / 持久化",
+    title: "Save via command",
+    command: "run-shell ~/.tmux/plugins/tmux-resurrect/scripts/save.sh",
+    description: "命令方式立刻保存。",
   }),
   E({
-    id: "flow-skip-attach",
-    section: "Workflow / 工作流",
-    title: "Skip auto-attach (one-off)",
-    shell: "CMUX_NO_TMUX=1 <cmd>",
-    description: "某次想用纯 shell 不进 tmux。",
-  }),
-  E({
-    id: "flow-skip-attach-shell",
-    section: "Workflow / 工作流",
-    title: "Skip auto-attach (in pane)",
-    shell: "unset __CFBundleIdentifier && exec zsh",
-    description: "已经在 pane 里，临时起一个不会自动 attach 的裸 zsh。",
+    id: "resurrect-restore-cmd",
+    section: "Resurrect / 持久化",
+    title: "Restore via command",
+    command: "run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh",
+    description: "命令方式恢复上次保存。",
   }),
 
   // ── Files ────────────────────────────────────────────────────────────────
   E({
-    id: "file-zshrc",
-    section: "Files / 文件位置",
-    title: "~/.zshrc",
-    description: "cmux 检测 + 自动 attach 块在文件顶部（p10k instant prompt 之后）。",
-  }),
-  E({
-    id: "file-tmux-start",
-    section: "Files / 文件位置",
-    title: "~/bin/tmux-start.sh",
-    description: "tmux 启动脚本：清理 >48h 闲置 session，attach 到 papers。",
-  }),
-  E({
     id: "file-tmux-conf",
     section: "Files / 文件位置",
     title: "~/.tmux.conf",
-    description: "→ Dropbox/Apps/Terminal-config-sync/tmux.conf。prefix=C-a、vi 复制、unbind 掉 split。",
+    description: "tmux 主配置：prefix、键位、视觉、插件加载。",
+    keywords: ["config"],
   }),
   E({
-    id: "file-ghostty",
+    id: "file-tmux-plugins",
     section: "Files / 文件位置",
-    title: "~/.config/ghostty/config",
-    description: "Ghostty 渲染配置。`working-directory = ~/Library/CloudStorage/Dropbox`。",
-  }),
-  E({
-    id: "file-cmux",
-    section: "Files / 文件位置",
-    title: "~/.config/cmux/cmux.json",
-    description: "cmux app 配置。",
+    title: "~/.tmux/plugins/",
+    description: "TPM (Tmux Plugin Manager) 默认的插件安装目录。",
+    keywords: ["plugin", "tpm"],
   }),
 ];
 
 export const SECTIONS_IN_ORDER: CheatSection[] = [
   "Core / 核心",
   "Window / 窗口",
+  "Pane / 面板",
   "Session",
   "Copy mode / 复制",
   "Misc / 杂项",
   "Command mode / 命令模式",
   "Resurrect / 持久化",
-  "Workflow / 工作流",
   "Files / 文件位置",
 ];

@@ -50,19 +50,33 @@ export default function RunCommand() {
   const submit = async () => {
     const trimmed = cmd.trim();
     if (!trimmed) {
-      await showToast({ style: Toast.Style.Failure, title: "Command is empty" });
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Command is empty",
+      });
       return;
     }
-    const next = [trimmed, ...history.filter((h) => h !== trimmed)].slice(0, HISTORY_MAX);
+    const next = [trimmed, ...history.filter((h) => h !== trimmed)].slice(
+      0,
+      HISTORY_MAX,
+    );
     setHistory(next);
     await LocalStorage.setItem(HISTORY_KEY, JSON.stringify(next));
 
     try {
       const out = await runRawCommand(trimmed);
-      push(<CommandResult command={trimmed} stdout={out.stdout} stderr={out.stderr} />);
+      push(
+        <CommandResult
+          command={trimmed}
+          stdout={out.stdout}
+          stderr={out.stderr}
+        />,
+      );
     } catch (e) {
       const stderr = e instanceof TmuxError ? e.stderr : String(e);
-      push(<CommandResult command={trimmed} stdout="" stderr={stderr} failed />);
+      push(
+        <CommandResult command={trimmed} stdout="" stderr={stderr} failed />,
+      );
     }
   };
 
@@ -71,7 +85,11 @@ export default function RunCommand() {
       actions={
         <ActionPanel>
           <Action.SubmitForm title="Run" icon={Icon.Play} onSubmit={submit} />
-          <ActionPanel.Submenu title="Insert Preset" icon={Icon.List} shortcut={{ modifiers: ["cmd"], key: "i" }}>
+          <ActionPanel.Submenu
+            title="Insert Preset"
+            icon={Icon.List}
+            shortcut={{ modifiers: ["cmd"], key: "i" }}
+          >
             {QUICK_PRESETS.map((p) => (
               <Action key={p} title={p} onAction={() => setCmd(p)} />
             ))}
@@ -95,7 +113,10 @@ export default function RunCommand() {
               onAction={async () => {
                 await LocalStorage.removeItem(HISTORY_KEY);
                 setHistory([]);
-                await showToast({ style: Toast.Style.Success, title: "History cleared" });
+                await showToast({
+                  style: Toast.Style.Success,
+                  title: "History cleared",
+                });
               }}
             />
           )}
@@ -110,9 +131,11 @@ export default function RunCommand() {
         onChange={setCmd}
         autoFocus
       />
-      <Form.Description text='输入会作为 `tmux <input>` 运行（通过 /bin/sh -c，所以引号、变量按 shell 解析）。' />
+      <Form.Description text="输入会作为 `tmux <input>` 运行（通过 /bin/sh -c，所以引号、变量按 shell 解析）。" />
       {history.length > 0 && (
-        <Form.Description text={`Recent: ${history.slice(0, 5).join("  ·  ")}`} />
+        <Form.Description
+          text={`Recent: ${history.slice(0, 5).join("  ·  ")}`}
+        />
       )}
     </Form>
   );
@@ -129,7 +152,12 @@ function CommandResult({
   stderr: string;
   failed?: boolean;
 }) {
-  const parts: string[] = [`# tmux ${command}`, "", failed ? "> **Failed**" : "> **Success**", ""];
+  const parts: string[] = [
+    `# tmux ${command}`,
+    "",
+    failed ? "> **Failed**" : "> **Success**",
+    "",
+  ];
   if (stdout.trim().length > 0) {
     parts.push("**stdout**", "```", stdout.trimEnd(), "```", "");
   } else {
@@ -145,8 +173,12 @@ function CommandResult({
       navigationTitle={`tmux ${command}`}
       actions={
         <ActionPanel>
-          {stdout.length > 0 && <Action.CopyToClipboard title="Copy stdout" content={stdout} />}
-          {stderr.length > 0 && <Action.CopyToClipboard title="Copy stderr" content={stderr} />}
+          {stdout.length > 0 && (
+            <Action.CopyToClipboard title="Copy Stdout" content={stdout} />
+          )}
+          {stderr.length > 0 && (
+            <Action.CopyToClipboard title="Copy Stderr" content={stderr} />
+          )}
           <Action.CopyToClipboard
             title="Copy Command"
             content={`tmux ${command}`}
